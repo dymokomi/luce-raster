@@ -1,7 +1,7 @@
 #prisma 4.0
 def package "luce-raster" {
     str owner = "dymokomi"
-    str version = "0.1.0"
+    str version = "0.1.1"
     str kind = "package"
     str language = "luce-base"
     str description = "The pixel model shared by Luce's image codecs: Raster, chunks, sample types, a byte reader and buffer, and the codec error codes."
