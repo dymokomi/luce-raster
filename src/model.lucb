@@ -1,6 +1,6 @@
 import memory
 import strings
-from raster_errors import invalid, corrupt, limit
+from errors import invalid, corrupt, limit
 from binary import Buffer
 
 ## Integer channels use their integer units. Floating channels are scene-linear

@@ -1,5 +1,5 @@
 import memory
-from raster_errors import corrupt, limit
+from errors import corrupt, limit
 
 pub struct Reader:
     pub var data: const u8[]
