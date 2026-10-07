@@ -1,0 +1,6 @@
+## The codec error codes are distinct: decoders built on this package report
+## them, and callers compare against them.
+
+test "the four codec error codes are distinct":
+    assert(invalid != unsupported and invalid != limit and invalid != corrupt)
+    assert(unsupported != limit and unsupported != corrupt and limit != corrupt)

@@ -1,0 +1,72 @@
+## The pixel model: channels, attributes, limits and allocation.
+
+test "standard channels are Y, YA, RGB or RGBA and found by name":
+    var gray: Raster
+    defer gray.close()
+    try gray.standard(2, .uint8)
+    assert(gray.channels.length == 2 and gray.channels[0].name == "Y" and gray.channels[1].name == "A")
+    var color: Raster
+    defer color.close()
+    try color.standard(4, .float32)
+    assert(try color.find_channel("B") == 2 and color.channels[3].kind == .float32)
+    var missing = false
+    _ = color.find_channel("Z") catch failure:
+        missing = failure.code == invalid
+        recover 0
+    assert(missing)
+    var five = false
+    try color.standard(5, .uint8) catch failure:
+        five = failure.code == invalid
+    assert(five)
+
+test "a duplicate or empty channel name is refused":
+    var raster: Raster
+    defer raster.close()
+    try raster.channel("R", .uint16)
+    var refused = 0
+    raster.channel("R", .uint16) catch failure:
+        if failure.code == invalid: refused += 1
+    raster.channel("", .uint16) catch failure:
+        if failure.code == invalid: refused += 1
+    assert(refused == 2 and raster.channels.length == 1)
+
+test "attributes are kept by name and replaced in place":
+    var raster: Raster
+    defer raster.close()
+    try raster.attribute("Software", "string", b"one")
+    try raster.attribute("Artist", "string", b"me")
+    try raster.attribute("Software", "text", b"two")
+    assert(raster.attributes.length == 2 and raster.get("Software") == "two" and raster.attributes[0].type_name == "text")
+    assert(raster.get("Missing") == "")
+
+test "validate counts samples and enforces the dimension and pixel limits":
+    var raster = Raster(width = 4, height = 3)
+    defer raster.close()
+    try raster.standard(3, .uint8)
+    assert(try raster.validate() == 36)
+    try raster.allocate()
+    assert(raster.pixels.length == 36)
+    var again = false
+    try raster.allocate() catch failure:
+        again = failure.code == invalid
+    assert(again)
+    var huge = Raster(width = 100000, height = 100000)
+    defer huge.close()
+    try huge.standard(1, .uint8)
+    var limited = false
+    _ = huge.validate() catch failure:
+        limited = failure.code == limit
+        recover 0
+    assert(limited)
+    var empty = Raster(width = 0, height = 3)
+    defer empty.close()
+    try empty.standard(1, .uint8)
+    var zero = false
+    _ = empty.validate() catch failure:
+        zero = failure.code == invalid
+        recover 0
+    assert(zero)
+
+test "each sample type has its full-scale value":
+    assert(maximum(.uint8) == 255.0 and maximum(.uint16) == 65535.0 and maximum(.uint32) == 4294967295.0)
+    assert(maximum(.float32) == 1.0 and maximum(.float16) == 1.0)
